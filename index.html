@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alfa Logistics - Warehouse Putaway Report (Python Auto-Send)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+ *{box-sizing:border-box}
+ body{font-family:system-ui,sans-serif;background:#f1f5f9;padding:12px;margin:0}
+.box{background:#fff;max-width:1280px;margin:auto;padding:22px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.07);border-top:6px solid #0d2a54}
+.header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+ h2{color:#0d2a54;margin:0;font-size:18px}
+.email-config{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin:14px 0;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:end}
+.email-config > div{display:flex;flex-direction:column;min-width:0}
+.email-config label{font-size:10px;font-weight:800;color:#475569;text-transform:uppercase;display:block;margin-bottom:6px;line-height:1.3;min-height:26px}
+.email-config input{width:100%;padding:11px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;height:42px;min-height:42px;box-sizing:border-box}
+.fixed-banner{background:linear-gradient(135deg,#0d2a54 0%,#1e40af 100%);color:#fff;border-radius:10px;padding:14px 18px;margin-bottom:14px;text-align:center;font-weight:900;font-size:14px;letter-spacing:.3px;box-shadow:0 4px 12px rgba(13,42,84,.25);display:flex;align-items:center;justify-content:center;gap:10px}
+.badge-by{font-size:11px;background:#0d2a54;color:#fff;padding:7px 14px;border-radius:99px;font-weight:800;letter-spacing:.2px}
+.badge-by span{color:#fbbf24}
+.title-box{background:#fffbeb;border:1px dashed #f59e0b;border-radius:10px;padding:12px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:end}
+.title-box .g label{font-size:10px;font-weight:800;color:#92400e;text-transform:uppercase;display:block;margin-bottom:4px}
+.title-box input{width:100%;padding:10px;border:2px solid #f59e0b;border-radius:8px;font-weight:700;text-align:center}
+.title-box input#client{border-color:#0d2a54;background:#eff6ff}
+.title-box input#receipt{border-color:#92400e;background:#fffbeb}
+.footer{margin-top:22px;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;text-align:center;font-size:12px;font-weight:800;color:#0d2a54;display:flex;align-items:center;justify-content:center;gap:10px}
+.footer .phone{background:#0d2a54;color:#fff;padding:4px 10px;border-radius:20px;font-family:monospace;font-weight:900}
+.form{display:grid;grid-template-columns:repeat(7, minmax(0,1fr));gap:14px 10px;align-items:start}
+@media(max-width:1200px){.form{grid-template-columns:repeat(4, minmax(0,1fr))}}
+@media(max-width:700px){.form{grid-template-columns:repeat(2, minmax(0,1fr))}}
+@media(max-width:450px){.form{grid-template-columns:1fr}}
+.g{display:flex;flex-direction:column;min-width:0;position:relative}
+.g label{font-size:10px;font-weight:800;color:#334155;display:flex;align-items:center;gap:3px;margin-bottom:4px;text-transform:uppercase;white-space:nowrap}
+.g label .required-star{color:#dc2626;font-size:12px;font-weight:900}
+.g input{width:100%;padding:9px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;min-width:0;transition:all .2s ease;background:#fff}
+.g input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.g input.input-error{border-color:#dc2626;background:#fef2f2;box-shadow:0 0 0 3px rgba(220,38,38,.12)}
+.g input.req-default{border-width:1.5px;border-color:#94a3b8}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+.shake{animation:shake .3s ease}
+.location-group{grid-column:span 2;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.btn{flex:1;min-width:130px;padding:12px;border:none;border-radius:10px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.btn-add{background:#0d2a54;color:#fff}.btn-save{background:#15803d;color:#fff}.btn-send{background:linear-gradient(135deg,#0d2a54,#2563eb);color:#fff}
+.btn-clear{background:#fff;color:#dc2626;border:2px solid #fecaca}
+.auto-save{font-size:10px;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;padding:4px 8px;border-radius:20px;font-weight:700;display:inline-flex;align-items:center;gap:4px;margin-left:8px}
+.bottom-actions{display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:10px}
+ table{width:100%;border-collapse:collapse;margin-top:16px;font-size:11px} th{background:#0d2a54;color:#fff;padding:9px;text-align:left;white-space:nowrap} td{padding:7px;border-bottom:1px solid #eee;word-break:break-word}
+.badge-from{background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;font-weight:800;font-size:10px}
+.badge-to{background:#dcfce7;color:#166534;padding:2px 6px;border-radius:4px;font-weight:800;font-size:10px}
+.saved-hint{font-size:9px;color:#16a34a;font-weight:700;margin-top:2px;display:none}
+.saved-hint.show{display:block}
+.python-badge{background:#000;color:#0f0;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:900;font-family:monospace}
+</style>
+</head>
+<body>
+<div class="box">
+<div class="header">
+<h2><i class="fa-solid fa-warehouse"></i> Alfa Logistics - Warehouse Report <span class="python-badge"><i class="fa-brands fa-python"></i> PYTHON AUTO-SEND</span></h2>
+<span class="badge-by"><i class="fa-solid fa-user" style="font-size:10px;color:#fbbf24"></i> By : Ahmed Sayed <span>01009407471</span></span>
+</div>
+<div class="email-config">
+<div><label><i class="fa-solid fa-envelope"></i> Send To (To)</label><input id="emailTo" value="a.Sayed@alfa-logistics.com"></div>
+<div><label>CC</label><input id="emailCc" placeholder="finance@company.com"></div>
+</div>
+<div class="fixed-banner"><i class="fa-solid fa-warehouse"></i> Warehouse Putaway Report - PYTHON AUTO SEND</div>
+<div class="title-box">
+<div class="g"><label>Client Name</label><input id="client" placeholder="Enter Client Name"><span id="hint-client" class="saved-hint">✓ Saved</span></div>
+<div class="g"><label>Receipt Number</label><input id="receipt" placeholder="Enter Receipt Number"><span id="hint-receipt" class="saved-hint">✓ Saved</span></div>
+</div>
+<div class="form">
+<div class="g"><label>Item Code <span class="required-star">*</span></label><input id="code" class="req-default" placeholder="e.g. 1001"><span id="hint-code" class="saved-hint">✓ Saved</span></div>
+<div class="g"><label>Description</label><input id="itemDesc" placeholder="Item Description"></div>
+<div class="location-group">
+<div class="g"><label>From Location <span class="required-star">*</span></label><input id="fromLoc" class="req-default" placeholder="e.g. A-01"><span id="hint-fromLoc" class="saved-hint">✓ Saved</span></div>
+<div class="g"><label>To Location <span class="required-star">*</span></label><input id="toLoc" class="req-default" placeholder="e.g. B-02"></div>
+</div>
+<div class="g"><label>Quantity <span class="required-star">*</span></label><input id="qty" type="number" class="req-default" placeholder="Qty"><span id="hint-qty" class="saved-hint">✓ Saved</span></div>
+<div class="g"><label>Production Date</label><input id="prodDate" type="text" placeholder="DD/MM/YYYY"></div>
+<div class="g"><label>Expiry Date</label><input id="expDate" type="text" placeholder="DD/MM/YYYY"></div>
+</div>
+<div class="actions">
+<button class="btn btn-add" onclick="addRow()"><i class="fa-solid fa-plus"></i> Add</button>
+<button class="btn btn-save" onclick="saveExcel()"><i class="fa-solid fa-file-excel"></i> Save Excel</button>
+<button id="sendBtn" class="btn btn-send" onclick="sendWithPython()"><i class="fa-brands fa-python"></i> Send via Python (Auto)</button>
+</div>
+<table id="tbl"><thead><tr><th>Client</th><th>Receipt</th><th>Code</th><th>Description</th><th>From</th><th>To</th><th>Qty</th><th>Prod Date</th><th>Exp Date</th><th></th></tr></thead><tbody></tbody></table>
+<div class="bottom-actions">
+<p id="count" style="font-weight:800;font-size:12px;margin:0"></p>
+<div style="display:flex;align-items:center;gap:10px">
+<span id="autoSaveStatus" class="auto-save"><i class="fa-solid fa-floppy-disk"></i> Auto-save ON</span>
+<button class="btn btn-clear" style="flex:none;min-width:auto;padding:8px 14px;font-size:11px" onclick="clearAll()"><i class="fa-solid fa-trash-can"></i> Clear All</button>
+</div>
+</div>
+<div class="footer"><i class="fa-solid fa-user"></i> Ahmed Sayed <span class="phone"><i class="fa-solid fa-phone" style="font-size:10px"></i> 01009407471</span></div>
+</div>
+<script>
+const FIXED_TITLE = "Warehouse Putaway Report";
+const STORAGE_ROWS = 'alfaMulti_v3';
+const STORAGE_PRO = 'alfa_last_values_pro';
+let rows = JSON.parse(localStorage.getItem(STORAGE_ROWS) || '[]');
+function setError(input, isError){ if(isError){input.classList.add('input-error','shake');setTimeout(()=>input.classList.remove('shake'),300);}else{input.classList.remove('input-error');} }
+function render(){
+ let tbody=document.querySelector('#tbl tbody'); tbody.innerHTML='';
+ rows.forEach((r,i)=>{
+  let tr=document.createElement('tr');
+  tr.innerHTML=`<td>${r.client||''}</td><td><span style="background:#fffbeb;border:1px solid #f59e0b;padding:2px 6px;border-radius:4px;font-weight:700;font-size:10px">${r.receipt||''}</span></td><td><b>${r.code||''}</b></td><td>${r.description||''}</td><td><span class="badge-from">${r.fromLoc||''}</span></td><td><span class="badge-to">${r.toLoc||''}</span></td><td><b>${r.qty||''}</b></td><td>${r.prodDate||''}</td><td>${r.expDate||''}</td><td><button onclick="rows.splice(${i},1);render()" style="background:#fee2e2;color:#dc2626;border:none;padding:4px 8px;border-radius:5px;cursor:pointer">X</button></td>`;
+  tbody.appendChild(tr);
+ });
+ document.getElementById('count').innerText=`Total: ${rows.length} | Qty: ${rows.reduce((a,b)=>a+Number(b.qty||0),0)}`;
+ localStorage.setItem(STORAGE_ROWS, JSON.stringify(rows));
+ saveAllFields();
+}
+function saveAllFields(){
+ const data = {client: document.getElementById('client').value, receipt: document.getElementById('receipt').value, fromLoc: document.getElementById('fromLoc').value.toUpperCase(), qty: document.getElementById('qty').value, code: document.getElementById('code').value, emailTo: document.getElementById('emailTo').value, emailCc: document.getElementById('emailCc').value, lastUpdate: new Date().toISOString()};
+ localStorage.setItem(STORAGE_PRO, JSON.stringify(data));
+}
+function loadAllFields(){
+ try{const raw=localStorage.getItem(STORAGE_PRO); if(raw){const d=JSON.parse(raw); if(d.client!==undefined) document.getElementById('client').value=d.client; if(d.receipt!==undefined) document.getElementById('receipt').value=d.receipt; if(d.fromLoc) document.getElementById('fromLoc').value=d.fromLoc; if(d.qty) document.getElementById('qty').value=d.qty; if(d.code) document.getElementById('code').value=d.code; if(d.emailTo) document.getElementById('emailTo').value=d.emailTo; if(d.emailCc) document.getElementById('emailCc').value=d.emailCc; return;}}catch(e){}
+}
+function showHint(id){const hint=document.getElementById('hint-'+id); if(!hint) return; hint.classList.add('show'); setTimeout(()=>hint.classList.remove('show'),1500);}
+function updateAutoSaveStatus(){}
+function clearAll(){ if(confirm(`مسح كل الـ ${rows.length} صفوف؟`)){ rows=[]; render(); } }
+function addRow(){
+ let c=document.getElementById('client');let rc=document.getElementById('receipt');let code=document.getElementById('code');let desc=document.getElementById('itemDesc');let fromLoc=document.getElementById('fromLoc');let toLoc=document.getElementById('toLoc');let qty=document.getElementById('qty');let pd=document.getElementById('prodDate');let ed=document.getElementById('expDate');
+ let isValid=true; [code, fromLoc, toLoc, qty].forEach(i=>setError(i,false));
+ if(!code.value.trim()){ setError(code,true); isValid=false; }
+ if(!fromLoc.value.trim()){ setError(fromLoc,true); isValid=false; }
+ if(!toLoc.value.trim()){ setError(toLoc,true); isValid=false; }
+ if(!qty.value.trim()){ setError(qty,true); isValid=false; }
+ if(!isValid)return;
+ rows.push({client:c.value.trim(),receipt:rc.value.trim(),code:code.value.trim(),description:desc.value.trim(),fromLoc:fromLoc.value.trim().toUpperCase(),toLoc:toLoc.value.trim().toUpperCase(),qty:qty.value.trim(),prodDate:pd.value.trim(),expDate:ed.value.trim()});
+ render();
+ desc.value='';toLoc.value='';pd.value='';ed.value='';code.focus();
+}
+function createWB(){
+ let title=FIXED_TITLE;let clientName=document.getElementById('client').value.trim()||rows[0]?.client||'No Name';let receiptNum=document.getElementById('receipt').value.trim()||rows[0]?.receipt||'';let top=[[title],[`Client: ${clientName} | Receipt: ${receiptNum} | Date: ${new Date().toLocaleString('en-US')} | Items: ${rows.length} | Qty: ${rows.reduce((a,b)=>a+Number(b.qty||0),0)}`],[],["Client","Receipt Number","Code","Description","From Location","To Location","Qty","Production Date","Expiry Date"]];let data=rows.map(r=>[r.client,r.receipt||receiptNum,r.code,r.description,r.fromLoc,r.toLoc,r.qty,r.prodDate,r.expDate]);let ws=XLSX.utils.aoa_to_sheet([...top,...data]);ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:8}},{s:{r:1,c:0},e:{r:1,c:8}}];ws['!cols']=[{wch:14},{wch:14},{wch:12},{wch:30},{wch:12},{wch:12},{wch:8},{wch:16},{wch:16}];let wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Report");return {wb,title,client:clientName, receipt: receiptNum};
+}
+function saveExcel(){ if(!rows.length){alert('No data');return;} let {wb,title}=createWB(); XLSX.writeFile(wb, `${title}.xlsx`); }
+
+// === الدالة الجديدة اللي بتبعت ببايثون أوتوماتيك ===
+async function sendWithPython(){
+ if(!rows.length){ alert('No data'); return; }
+ let to=document.getElementById('emailTo').value.trim();
+ let cc=document.getElementById('emailCc').value.trim();
+ if(!to){ alert('اكتب إيميل To'); return; }
+ let btn=document.getElementById('sendBtn'); let old=btn.innerHTML; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Sending via Python...'; btn.disabled=true;
+ try{
+  let {wb,title,client,receipt}=createWB();
+  // حول الإكسيل لـ base64
+  let wbout = XLSX.write(wb, {bookType:'xlsx', type:'base64'});
+  let fileName = `${title} - ${client} - ${receipt}.xlsx`;
+  
+  let resp = await fetch('/send-excel', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      to: to,
+      cc: cc,
+      client: client,
+      receipt: receipt,
+      fileName: fileName,
+      fileBase64: wbout
+    })
+  });
+  let result = await resp.json();
+  if(result.success){
+    alert(result.message);
+  } else {
+    throw new Error(result.message);
+  }
+ } catch(e){
+  alert("فشل الإرسال - تأكد انك مشغل python app.py\n\n" + e.message + "\n\n هيتم فتح Gmail كبديل...");
+  // fallback للطريقة القديمة
+  let {wb,title,client}=createWB();
+  XLSX.writeFile(wb, `${title} - ${client}.xlsx`);
+  let subject = `${title} - ${client}`;
+  let body = `Client: ${client}\nTotal: ${rows.length} items`;
+  window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+ } finally { btn.innerHTML=old; btn.disabled=false; }
+}
+
+['code','fromLoc','toLoc','qty','client','receipt','emailTo','emailCc'].forEach(id=>{
+  const el=document.getElementById(id); if(!el) return;
+  el.addEventListener('input', saveAllFields);
+});
+document.addEventListener('DOMContentLoaded', ()=>{ loadAllFields(); render(); });
+</script>
+</body>
+</html>
