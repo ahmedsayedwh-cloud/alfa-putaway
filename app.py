@@ -9,10 +9,10 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "a.Sayed@alfa-logistics.com")
+SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "")
 APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
-SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 587
+SMTP_SERVER = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
 
 @app.route('/')
 def index():
